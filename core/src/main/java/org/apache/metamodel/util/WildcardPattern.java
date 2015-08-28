@@ -35,6 +35,8 @@ public final class WildcardPattern implements Serializable {
 	private String _pattern;
 	private char _wildcard;
 	private boolean _endsWithDelim;
+	private	String specialCharacters[] = {"\\.","\\(","\\)","\\[","\\]","\\^","\\?","\\{","\\}","\\*","\\|","\\+"};
+
 
 	public WildcardPattern(String pattern, char wildcard) {
 		_pattern = pattern;
@@ -43,27 +45,16 @@ public final class WildcardPattern implements Serializable {
 	}
 
 	public boolean matches(String value) {
-		if (value == null) {
-			return false;
+
+		String patternString  = _pattern;
+		for (String ch : specialCharacters){
+			patternString = patternString.replaceAll(ch,"\\"+ch);
 		}
-		StringTokenizer st = new StringTokenizer(_pattern,
-				Character.toString(_wildcard));
-		int charIndex = 0;
-		while (st.hasMoreTokens()) {
-			String token = st.nextToken();
-			charIndex = value.indexOf(token, charIndex);
-			if (charIndex == -1) {
-				return false;
-			}
-			charIndex = charIndex + token.length();
-		}
-		if (!_endsWithDelim) {
-			// Unless the last char of the pattern is a wildcard, we need to
-			// have reached the end of the string
-			if (charIndex != value.length()) {
-				return false;
-			}
-		}
-		return true;
+		patternString = patternString.replaceAll("%", ".*");
+		patternString = patternString.replaceAll("_", ".");
+		Pattern pattern = Pattern.compile(patternString);
+		Matcher matcher = pattern.matcher(value);
+		boolean matches = matcher.matches();
+		return matches;
 	}
 }
